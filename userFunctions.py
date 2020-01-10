@@ -220,6 +220,9 @@ def wedExpiri(ticker, targetDays):
 
     return str(targetExpiration)
 
+
+
+## Functions to Place Orders:
 def ironCondor(ticker = str, expirationDate = str, delta = float, callWeight = 1, putWeight = 1):
     callDelta = delta
     putDelta = -delta
@@ -280,4 +283,178 @@ def ironCondor(ticker = str, expirationDate = str, delta = float, callWeight = 1
     putCredit = rho.order_option_spread('credit', putSpreadPrice, ticker, putWeight, putCreditspread)
     print(putCredit)
 
+def putCreditSpread(ticker = str, expirationDate = str, delta = float, qty =1):
+    ## Make sure delta is negative
+    if delta > 0:
+        delta = -delta
+    ## Get Put Credit Spread Info
+    putInfo = putCreditinfo(ticker, expirationDate, delta, 'put')
+    shortPutInfo = putInfo[1]
+    longPutInfo = putInfo[0]
+    shortPutStrike = str(round(float(shortPutInfo['strike_price']), 1))
+    longPutStrike = str(round(float(longPutInfo['strike_price']), 1))
+    longPutprice = float(longPutInfo['high_fill_rate_buy_price'])
+    shortPutprice = float(shortPutInfo['high_fill_rate_buy_price'])
+    putSpreadPrice = round(abs(shortPutprice-longPutprice), 2)
+    longPut = {"expirationDate": expirationDate,
+        "strike":longPutStrike,
+        "optionType":"put",
+        "effect":"open",
+        "action":"buy"}
+    shortPut = {"expirationDate": expirationDate,
+            "strike": shortPutStrike,
+            "optionType":"put",
+            "effect":"open",
+            "action":"sell"}
+    putCreditspread = [longPut, shortPut]
+    ## Place Order and Print Summary
+    putCredit = rho.order_option_spread('credit', putSpreadPrice, ticker, qty , putCreditspread)
+    print(putCredit)
+    print('shortPutStrike...', shortPutStrike)
+    print('longPutStrike...', longPutStrike)
 
+def callCreditSpread(ticker = str, expirationDate = str, delta = float, qty =1):
+    ## Get Call Credit Info
+    callInfo = callCreditinfo(ticker, expirationDate, delta, 'call')
+    shortCallInfo = callInfo[1]
+    longCallInfo = callInfo[0]
+    shortCallStrike = str(round(float(shortCallInfo['strike_price']), 1))
+    longCallStrike = str(round(float((longCallInfo['strike_price'])), 1))
+    longCallprice = float(longCallInfo['high_fill_rate_buy_price'])
+    shortCallprice = float(shortCallInfo['high_fill_rate_sell_price'])
+    price = round(abs(shortCallprice-longCallprice),2)
+    longCall = {"expirationDate": expirationDate,
+            "strike":longCallStrike,
+            "optionType":"call",
+            "effect":"open",
+            "action":"buy"}
+    shortCall = {"expirationDate": expirationDate,
+            "strike": shortCallStrike,
+            "optionType":"call",
+            "effect":"open",
+            "action":"sell"}
+    callCreditspread = [longCall, shortCall]
+    ## Place Order and Print Summary
+    callCredit = rho.order_option_spread('credit', price, ticker, qty, callCreditspread)
+    print(callCredit)
+    print('shortCallStrike...', shortCallStrike)
+    print('longCallStrike...', longCallStrike)
+
+def callDebitSpread(ticker = str, expirationDate = str, delta = float, qty =1):
+    ## Get Call Debit Info
+    callInfo = callDebitinfo(ticker, expirationDate, delta, 'call')
+    shortCallInfo = callInfo[1]
+    longCallInfo = callInfo[0]
+    shortCallStrike = str(round(float(shortCallInfo['strike_price']), 1))
+    longCallStrike = str(round(float((longCallInfo['strike_price'])), 1))
+    longCallprice = float(longCallInfo['high_fill_rate_buy_price'])
+    shortCallprice = float(shortCallInfo['high_fill_rate_sell_price'])
+    price = round(abs(shortCallprice-longCallprice),2)
+    longCall = {"expirationDate": expirationDate,
+            "strike":longCallStrike,
+            "optionType":"call",
+            "effect":"open",
+            "action":"buy"}
+    shortCall = {"expirationDate": expirationDate,
+            "strike": shortCallStrike,
+            "optionType":"call",
+            "effect":"open",
+            "action":"sell"}
+    callCreditspread = [longCall, shortCall]
+    ## Place Order and Print Summary
+    callCredit = rho.order_option_spread('debit', price, ticker, qty, callCreditspread)
+    print(callCredit)
+    print('shortCallStrike...', shortCallStrike)
+    print('longCallStrike...', longCallStrike)
+
+def putDebitSpread(ticker = str, expirationDate = str, delta = float, qty =1):
+    ## Make sure delta is negative
+    if delta > 0:
+        delta = -delta
+    ## Get Put Credit Spread Info
+    putInfo = putDebitInfo(ticker, expirationDate, delta, 'put')
+    longPutInfo = putInfo[0]
+    shortPutInfo = putInfo[1]
+    shortPutStrike = str(round(float(shortPutInfo['strike_price']), 1))
+    longPutStrike = str(round(float(longPutInfo['strike_price']), 1))
+    longPutprice = float(longPutInfo['high_fill_rate_buy_price'])
+    shortPutprice = float(shortPutInfo['high_fill_rate_buy_price'])
+    putSpreadPrice = round(abs(shortPutprice-longPutprice), 2)
+    longPut = {"expirationDate": expirationDate,
+        "strike":longPutStrike,
+        "optionType":"put",
+        "effect":"open",
+        "action":"buy"}
+    shortPut = {"expirationDate": expirationDate,
+            "strike": shortPutStrike,
+            "optionType":"put",
+            "effect":"open",
+            "action":"sell"}
+    putCreditspread = [longPut, shortPut]
+    ## Place Order and Print Summary
+    putCredit = rho.order_option_spread('debit', putSpreadPrice, ticker, qty , putCreditspread)
+    print(putCredit)
+    print('shortPutStrike...', shortPutStrike)
+    print('longPutStrike...', longPutStrike)
+
+def callDebitinfo(ticker, expirationDate, targetDelta, opType):
+    errorLast = 1
+    chains = rh.find_options_for_stock_by_expiration(ticker, expirationDate, opType)
+    chains = pd.DataFrame(chains)
+    for index, row in chains.iterrows():
+        if row['delta'] is None :
+            row['delta'] = float(0)
+            itDelt = float(row['delta'])
+        else:
+            itDelt = float(row['delta'])
+        error = abs(itDelt-targetDelta)
+        if error < errorLast:
+            targetID = row['id']
+            targetStrike = row['strike_price']
+            realDelta = row['delta']
+            errorLast = error
+            rowShort = row
+    priceErrorLast = 2
+    targetStrike = float(targetStrike)
+    for index, row in chains.iterrows():
+        itPrice = float(row['strike_price'])
+        errorAbs = abs(itPrice-targetStrike)
+        errorTrue = itPrice - targetStrike
+        if errorAbs < priceErrorLast and errorTrue < 0:
+            targetIDlong = row['id']
+            targetStrikelong = row['strike_price']
+            realDeltalong = row['delta']
+            priceErrorLast = errorAbs
+            rowLong = row   
+    return rowLong, rowShort
+
+def putDebitInfo(ticker, expirationDate, targetDelta, opType = 'put'):
+    errorLast = 1
+    chains = rh.find_options_for_stock_by_expiration(ticker, expirationDate, opType)
+    chains = pd.DataFrame(chains)
+    for index, row in chains.iterrows():
+        if row['delta'] is None :
+            row['delta'] = float(0)
+            itDelt = float(row['delta'])
+        else:
+            itDelt = float(row['delta'])
+        error = abs(itDelt-targetDelta)
+        if error < errorLast:
+            targetID = row['id']
+            targetStrike = row['strike_price']
+            realDelta = row['delta']
+            errorLast = error
+            rowShort = row
+    priceErrorLast = 2
+    targetStrike = float(targetStrike)
+    for index, row in chains.iterrows():
+        itPrice = float(row['strike_price'])
+        errorAbs = abs(itPrice-targetStrike)
+        errorTrue = itPrice - targetStrike
+        if errorAbs < priceErrorLast and errorTrue > 0:
+            targetIDlong = row['id']
+            targetStrikelong = row['strike_price']
+            realDeltalong = row['delta']
+            priceErrorLast = errorAbs
+            rowLong = row   
+    return rowLong, rowShort
