@@ -458,3 +458,33 @@ def putDebitInfo(ticker, expirationDate, targetDelta, opType = 'put'):
             priceErrorLast = errorAbs
             rowLong = row   
     return rowLong, rowShort
+
+def topBollinger(ticker = str):
+    # Arbitrary Start and End Dates
+    start = dt.datetime(2015,1,1)
+    end = dt.datetime.now()
+    ## Get data from yahoo finance
+    msft = web.DataReader(ticker, 'yahoo', start, end)
+    msftClose = msft['Adj Close']
+    msft20dma = msftClose.rolling(window=20).mean()
+    msftSTD = msftClose.rolling(window = 20).std()
+    topBand = msft20dma + 2 * msftSTD
+    bottomBand = msft20dma - 2 * msftSTD
+    ## Get last data point on moving average
+    topIndicator = round(float(topBand.tail(1)), 2)
+    return topIndicator
+
+def bottomBollinger(ticker = str):
+    # Arbitrary Start and End Dates
+    start = dt.datetime(2017,1,1)
+    end = dt.datetime.now()
+    ## Get data from yahoo finance
+    msft = web.DataReader(ticker, 'yahoo', start, end)
+    msftClose = msft['Adj Close']
+    msft20dma = msftClose.rolling(window=20).mean()
+    msftSTD = msftClose.rolling(window = 20).std()
+    topBand = msft20dma + 2 * msftSTD
+    bottomBand = msft20dma - 2 * msftSTD
+    ## Get last data point on moving average
+    bottomIndicator = round(float(bottomBand.tail(1)), 2)
+    return bottomIndicator
