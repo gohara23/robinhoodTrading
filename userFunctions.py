@@ -223,7 +223,7 @@ def wedExpiri(ticker, targetDays):
 
 
 ## Functions to Place Orders:
-def ironCondor(ticker = str, expirationDate = str, delta = float, callWeight = 1, putWeight = 1):
+def sell_ironCondor(ticker = str, expirationDate = str, delta = float, callWeight = 1, putWeight = 1):
     callDelta = delta
     putDelta = -delta
     ## Get Put Credit Spread Info
@@ -459,6 +459,17 @@ def putDebitInfo(ticker, expirationDate, targetDelta, opType = 'put'):
             rowLong = row   
     return rowLong, rowShort
 
+def buy_ironCondor(ticker = str, expirationDate = str, delta = float, callWeight = 1, putWeight = 1):
+    callDebitSpread(ticker, expirationDate, delta, callWeight)
+    putDebitSpread(ticker, expirationDate, delta, putWeight)
+
+def sell_ironCondor_byDelta(ticker = str, expirationDate = str, callDelta = float, putDelta=float, callWeight = 1, putWeight = 1):
+    callCreditSpread(ticker, expirationDate, callDelta, callWeight)
+    putCreditSpread(ticker, expirationDate, putDelta, putWeight)
+
+
+## Bollinger Bands ##
+
 def topBollinger(ticker = str):
     # Arbitrary Start and End Dates
     start = dt.datetime(2015,1,1)
@@ -488,3 +499,34 @@ def bottomBollinger(ticker = str):
     ## Get last data point on moving average
     bottomIndicator = round(float(bottomBand.tail(1)), 2)
     return bottomIndicator
+
+
+## Days Until Next Earnings ##
+def daysToEarnings(symbol = str):
+    today = dt.date.today()
+    earnings = rh.get_earnings(symbol)
+    earnings = pd.DataFrame(earnings)
+    report = earnings.report
+    daysUntil = 100
+    for item in report:
+        date = dt.datetime.strptime(str(item['date']), '%Y-%m-%d')
+        date = date.date()
+        td = date - today
+        td = td.days
+        if td < daysUntil and td > 0 :
+            daysUntil = td
+    return int(daysUntil)
+
+
+## .txt Symbol List ##
+def symbolList(txtFile = str):
+    data = open(txtFile)
+    symbols = data.read().splitlines()
+    return symbols
+
+## List Days to Earnings ##
+def list_daysToEarnings(tickers = list):
+    for item in tickers:
+        days = daysToEarnings(item)
+        print(item, '...', days)
+
